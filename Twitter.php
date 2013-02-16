@@ -176,7 +176,7 @@ class Twitter {
 
 
     /**
-     * Check to see if we have access the the current account.
+     * Check to see if we have access to the current account.
      * @todo verify the access tokens.
      * @return boolean
     **/
@@ -257,7 +257,7 @@ class Twitter {
      * @param $request - API request
      * @param $method - HTTP Method - default: GET
      * @param $params array - HTTP Query parameters
-     * @return RestfulService_Response
+     * @return CurlResponse
     **/
     public function api($request, $method = "GET", $params = array()) {
         // Sign the current request with the Authorization header.
