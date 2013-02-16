@@ -119,7 +119,7 @@ class Twitter {
      * User agent string.
      * @var string
     **/
-    protected $userAgent = "Michael Strong - Twitter PHP SDK";
+    protected $userAgent = "PHPTwitter";
 
 
     /**
