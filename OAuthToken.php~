@@ -1,0 +1,19 @@
+<?php
+
+/**
+ * Base structure for an OAuth Token.
+ * @package PHPTwitter
+**/
+class OAuthToken
+{
+    public $token = null;
+    public $secret = null;
+    
+    public function __construct($token = null, $secret = null)
+    {
+        $this->token = (string) $token;
+        $this->secret = (string) $secret;
+    }
+}
+
+?>
