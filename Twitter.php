@@ -113,8 +113,8 @@ class Twitter {
      * @var array
     **/
     protected $headers = array();
-    
-    
+
+
     /**
      * User agent string.
      * @var string
@@ -128,7 +128,7 @@ class Twitter {
     **/
     protected $user = array();
 
-    /** 
+    /**
      * Parses parameters (usually tokens) from a response body.
      *
      * @example
@@ -144,7 +144,7 @@ class Twitter {
     public static function parse_params($string) {
         // Parse the body to retreive the request tokens.
         $arr = explode("&", $string);
-        
+
         // Set the request tokens into a key => param structure.
         $params = array();
         foreach($arr as $param) {
@@ -153,7 +153,7 @@ class Twitter {
         }
         return $params;
     }
-    
+
 
     /**
      * Initiate our Twitter class
@@ -167,8 +167,8 @@ class Twitter {
         $this->consumer = new OAuthToken($consumerKey, $consumerSecret);
         $this->request = new OAuthToken(null, null);
         $this->access = new OAuthToken($accessToken, $accessSecret);
-        
-        
+
+
         // Set the default locations of the certificates
         $this->setCAPath(rtrim(dirname(__FILE__), "/"));
         $this->setCAInfo(rtrim($this->getCAPath(), "/") . "/cacert.pem");
@@ -197,12 +197,12 @@ class Twitter {
         // If we've already got a tokens, return them.
         if($this->request()->token != null && $this->request()->secret != null)
             return $this->request();
-            
+
         // Make the api request.
         $result = $this->api("oauth/request_token", "POST");
         if($result->statusCode() == 200) {
             $params = self::parse_params($result->body());
-            
+
             // Now we've got our params in a usable state, we'll set them and continue with the oauth flow.
             if(isset($params['oauth_token'], $params['oauth_token_secret'])) {
                 $this->setRequest(new OAuthToken($params['oauth_token'], $params['oauth_token_secret']));
@@ -240,11 +240,11 @@ class Twitter {
             $result = $this->api("oauth/access_token", "POST", array(
                 "oauth_verifier" => $this->getOAuthVerifier()
             ));
-            
+
             // Parse parameters
             $params = self::parse_params($result->body());
             if(isset($params['oauth_token'], $params['oauth_token_secret'])) {
-                $this->setAccess(new OAuthToken($params['oauth_token'], $params['oauth_token_secret']));                    
+                $this->setAccess(new OAuthToken($params['oauth_token'], $params['oauth_token_secret']));
                 return $this->access();
             }
         }
@@ -262,16 +262,18 @@ class Twitter {
     public function api($request, $method = "GET", $params = array()) {
         // Sign the current request with the Authorization header.
         $this->signRequest($request, $method, $params);
-            
+
+        $url = $this->getRequestURL($request, $method, $params);
+
         // Setup curl options
         $this->curlOpts += array(
-            CURLOPT_URL => rtrim($this->getEndPoint(), "/") . "/" . ltrim($request, "/"),
+            CURLOPT_URL => $this->getRequestURL($request, $method, $params),
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_HEADER => false,
             CURLOPT_USERAGENT => $this->getUserAgent(),
             CURLINFO_HEADER_OUT => true
         );
-        
+
         switch($method) {
             case 'POST':
                 $this->curlOpts += array(
@@ -279,7 +281,7 @@ class Twitter {
                     CURLOPT_POSTFIELDS => (is_array($params) && !empty($params)) ? http_build_query($params) : null
                 );
                 break;
-                
+
             case 'GET':
             default:
                 $this->curlOpts += array(
@@ -296,18 +298,18 @@ class Twitter {
                 CURLOPT_CAPATH => $this->getCAPath()
             );
         }
-        
-        
-        
+
+
+
         // Setup Curl
         $ch = curl_init();
-        
+
         // Set curl options
-        curl_setopt_array($ch, $this->curlOpts);  
-              
+        curl_setopt_array($ch, $this->curlOpts);
+
         // add headers
 		curl_setopt($ch, CURLOPT_HTTPHEADER, $this->getHeaders());
-		
+
 		// execute the curl request
         return new CurlResponse($ch);
     }
@@ -332,7 +334,7 @@ class Twitter {
 			    "oauth_consumer_key" => $this->consumer()->token,
 			    "oauth_version" => $this->getOAuthVersion()
             );
-            
+
             // If we have access, add the oauth_token to the signing params
             if($this->hasAccess()) {
                 $signingParams['oauth_token'] = $this->access()->token;
@@ -346,13 +348,13 @@ class Twitter {
             $signingParams['oauth_signature'] = base64_encode(
                 hash_hmac(
                     'sha1',
-                    $baseString = $this->getOAuthBaseString($request, $method, $baseStringParams),
-                    $this->getOauthSigningKey(),
+                    $baseString = $this->getOAuthBaseString($request, $method, $baseStringParams, $params),
+                    $this->getOAuthSigningKey(),
                     true
                 )
             );
             $this->oAuthSignature = $signingParams['oauth_signature'];
-            
+
             // If we have a request token, add that to our signing params
             if($this->request()->token && !$this->hasAccess()) $signingParams['oauth_token'] = $this->request()->token;
             ksort($signingParams);
@@ -362,7 +364,7 @@ class Twitter {
             foreach($signingParams as $k => $v)
 				$headers["Authorization"] .= rawurlencode($k).'="'.rawurlencode($v).'", ';
 			$headers["Authorization"] = substr($headers["Authorization"], 0, strlen($headers["Authorization"])-2);
-			
+
             $this->addHeaders($headers);
             return $headers;
         }
@@ -379,9 +381,10 @@ class Twitter {
      * @param $signingParams array
      * @return string
     **/
-    public function getOAuthBaseString($request, $method = "GET", $signingParams) {
+    public function getOAuthBaseString($request, $method, $signingParams, $params) {
         ksort($signingParams);
-		$baseString = rawurlencode($method).'&'.rawurlencode($this->getRequestURL($request)).'&';
+        list($requestURL) = explode("?", $this->getRequestURL($request, $method, $params));
+		$baseString = rawurlencode($method).'&'.rawurlencode($requestURL).'&';
 		foreach ($signingParams as $k => $v)
 			$baseString .= rawurlencode(rawurlencode($k).'='.rawurlencode($v).'&');
 
@@ -404,11 +407,11 @@ class Twitter {
             $signingKey .= rawurlencode($this->access()->secret);
         else if ($this->request()->secret)
             $signingKey .= rawurlencode($this->request()->secret);
-            
+
         return $signingKey;
     }
-    
-    
+
+
     /**
      * Get the current twitter user.
      * This calls account/verify_credentials {@link https://dev.twitter.com/docs/api/1.1/get/account/verify_credentials}
@@ -417,7 +420,7 @@ class Twitter {
     public function getUser() {
         if(!empty($this->user))
             return (array) $this->user;
-        
+
         // We haven't already set the user. See if we have access to retreive the current user.
         if($this->hasAccess()) {
             $result = $this->api("1.1/account/verify_credentials.json");
@@ -426,7 +429,7 @@ class Twitter {
         }
         return $this->user;
     }
-    
+
     public function setUser($id, $screen_name) {
         $this->user = array(
             "id" => (string) $id, // This must be a string to deal with 64-bit integers on 32-bit systems
@@ -498,7 +501,7 @@ class Twitter {
         // Attempt to gain the verifier from the current http request.
         if(isset($_GET['oauth_verifier']))
             return $this->oAuthVerifier = (string) $_GET['oauth_verifier'];
-            
+
         return false;
     }
 
@@ -528,9 +531,35 @@ class Twitter {
     public function setEndPoint($endPoint) {
         $this->endPoint = (string) $endPoint;
     }
-    
-    public function getRequestURL($request) {
-        return rtrim($this->getEndPoint(), "/") . "/" . ltrim($request, "/");
+
+
+    /**
+     * Builds up the request URL
+     * @param $request string - API subURL string
+     * @param $method string - HTTP Method
+     * @param $params array - query parameters
+     * @return string URL
+    **/
+    public function getRequestURL($request, $method = "GET", $params = array()) {
+
+        // Parse the request url.
+        $url = parse_url(rtrim($this->getEndPoint(), "/") . "/" . ltrim($request, "/"));
+
+        $query = isset($url['query']) ? self::parse_params($url['query']) : array();
+        if($method == "GET") {
+            $url['query'] = array_merge($query, $params);
+            ksort($url['query']);
+
+            if(!empty($url['query']))
+                $url['query'] = http_build_query($url['query']);
+        }
+
+        // Build the URL
+        $requestURL = $url['scheme'] . "://" . $url['host'] . $url['path'];
+        if($url['query'])
+            $requestURL .= "?" . $url['query'];
+
+        return $requestURL;
     }
 
 
@@ -629,8 +658,8 @@ class Twitter {
     public function setOAuthTimestamp($timestamp) {
         $this->oAuthTimestamp = (int) $timestamp;
     }
-    
-    
+
+
     /**
      * Gets a list of headers to send with the api request.
      * @return array
@@ -638,8 +667,8 @@ class Twitter {
     public function getHeaders() {
         return $this->headers;
     }
-    
-    
+
+
     /**
      * Add headers to the array
      * @param $headers array
@@ -650,7 +679,7 @@ class Twitter {
                 if(is_string($key) && is_string($value))
                     $this->headers[$key] = $value;
     }
-    
+
     /**
      * Remove a single header.
      * @param $key string
@@ -660,8 +689,8 @@ class Twitter {
         if(array_key_exists($key, $this->headers))
             unset($this->headers[$key]);
     }
-    
-    
+
+
     /**
      * Clear all headers.
     **/
@@ -722,12 +751,12 @@ class Twitter {
     public function setCAPath($path) {
         $this->caPath = (string) $path;
     }
-    
-    
+
+
     public function getUserAgent() {
         return (string) $this->userAgent;
     }
-    
+
     /**
      * Set the user agent string.
      * @param $string string
