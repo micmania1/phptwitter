@@ -556,7 +556,7 @@ class Twitter {
 
         // Build the URL
         $requestURL = $url['scheme'] . "://" . $url['host'] . $url['path'];
-        if($url['query'])
+        if(isset($url['query']) && trim($url['query']) != "")
             $requestURL .= "?" . $url['query'];
 
         return $requestURL;

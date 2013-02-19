@@ -9,7 +9,7 @@ $twitter = new Twitter("CONSUMER KEY", "CONSUMER SECRET"/*, "ACCESS_TOKEN", "ACC
 if(isset($_GET['reset'])) {
     unset($_SESSION['request']);
     unset($_SESSION['access']);
-    
+
     header("Location: index.php", true, 301);
     die('<a href="index.php">Back to the start</a>');
 }
@@ -45,10 +45,10 @@ if(!$twitter->hasAccess()) {
     }
 } else {
     // The user has authorized access to the application.
-    
+
     // Get the current user.
     $user = $twitter->getUser();
-    
+
     /**
      * The above call is the same as doing the following:
      *
@@ -58,12 +58,12 @@ if(!$twitter->hasAccess()) {
      * else
      *      $user = false;
     **/
-    
+
     if($user)
         echo "Hello, " . $user['screen_name'] . "<br />".
         "<a href=\"?reset=1\">Log out</a>";
     else
         echo "Unable to fetch the users' data.";
-        
+
 }
 ?>
