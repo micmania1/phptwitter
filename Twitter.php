@@ -548,16 +548,23 @@ class Twitter {
         $query = isset($url['query']) ? self::parse_params($url['query']) : array();
         if($method == "GET") {
             $url['query'] = array_merge($query, $params);
-            ksort($url['query']);
-
-            if(!empty($url['query']))
-                $url['query'] = http_build_query($url['query']);
+        } else if ($method == "POST") {
+            $url['query'] = $query;
         }
+
+
+        ksort($url['query']);
+        if(!empty($url['query']))
+            $url['query'] = http_build_query($url['query']);
+        else
+            $url['query'] = null;
+
 
         // Build the URL
         $requestURL = $url['scheme'] . "://" . $url['host'] . $url['path'];
         if(isset($url['query']) && trim($url['query']) != "")
             $requestURL .= "?" . $url['query'];
+
 
         return $requestURL;
     }
