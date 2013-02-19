@@ -3,7 +3,7 @@
 require_once("Twitter.php");
 session_start();
 
-$twitter = new Twitter("RgyV0KK2zolBdCnGzKIA", "oiBmiyVtebGt2S9q8DbswcxzfqvbeXWebrHSEmAT4"/*, "ACCESS_TOKEN", "ACCESS_SECRET"*/);
+$twitter = new Twitter("CONSUMER KEY", "CONSUMER SECRET"/*, "ACCESS_TOKEN", "ACCESS_SECRET"*/);
 
 // Reset tokens if requested.
 if(isset($_GET['reset'])) {
