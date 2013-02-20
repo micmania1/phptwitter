@@ -299,8 +299,6 @@ class Twitter {
             );
         }
 
-
-
         // Setup Curl
         $ch = curl_init();
 
@@ -311,7 +309,12 @@ class Twitter {
 		curl_setopt($ch, CURLOPT_HTTPHEADER, $this->getHeaders());
 
 		// execute the curl request
-        return new CurlResponse($ch);
+        $response = new CurlResponse($ch);
+        
+        // Clean this request, ready for the next one.
+        $this->curlOpts = array();
+        
+        return $response;
     }
 
 
