@@ -776,5 +776,4 @@ class Twitter {
     }
 
 }
-
 ?>
