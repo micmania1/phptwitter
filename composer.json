@@ -1,5 +1,5 @@
 {
-    name: "PHPTwitter",
-    description: "A PHP Twitter Library."
-    version: "1.0.0"
+    "name": "PHPTwitter",
+    "description": "A PHP Twitter Library."
+    "version": "1.0.0"
 }
