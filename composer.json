@@ -1,5 +1,6 @@
 {
     "name": "micmania1/phptwitter",
     "description": "A PHP Twitter Library.",
-    "version": "1.0.0"
+    "version": "1.0.0",
+    "minimum-stability": "stable"
 }
